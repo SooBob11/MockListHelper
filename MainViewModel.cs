@@ -1,51 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using MockHelper.Annotations;
 
 
 namespace MockHelper
 {
-    public class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : ViewModelBase
     {
+        private readonly MainModel _model = new MainModel();
+
         public MainViewModel()
         {
-            AvailableTypes = GetAvialibleTypes();
-            SelectedType = AvailableTypes[0];
-            SqlStatement = "SELECT * FROM ....";
-            ConnectionString = "Data Source=localhost;Initial Catalog=fotosteam;Integrated Security=true";
-
             SqlCommand = new DelegateCommand(ExecuteSqlCommand, c => true);
             GenerateCommand = new DelegateCommand(ExecuteGenerateCommand, CanExecuteGenerateCommand);
         }
 
-        public bool CanExecuteGenerateCommand(object parameter)
-        {           
-            return Data != null && Data.Rows.Count > 0; 
-        }
-
-        private List<string> GetAvialibleTypes()
+        public string ConnectionString
         {
-            return new List<string>() { "Test" };
+            get => _model.ConnectionString;
+            set => _model.ConnectionString = value;
         }
 
-        private DataTable _data;
-        private string _listDefinition;
-        public string SqlStatement { get; set; }
+        public bool CanExecuteGenerateCommand(object parameter)
+        {
+            return Data != null && Data.Rows.Count > 0;
+        }
+
+        
+        public string SqlStatement
+        {
+            get => _model.SqlStatement;
+            set => _model.SqlStatement = value;
+        }
 
         public DataTable Data
         {
-            get => _data;
+            get => _model.Data;
             set
             {
 
-                _data = value;
+                _model.Data = value;
                 OnPropertyChanged();
                 (GenerateCommand as DelegateCommand)?.RaiseCanExecuteChanged();
             }
@@ -53,69 +48,14 @@ namespace MockHelper
 
         private void ExecuteSqlCommand(object parameter)
         {
-            try
-            {
-                using (var connection = new SqlConnection(ConnectionString))
-                {
-                    using (var command = new SqlCommand(SqlStatement))
-                    {
-                        command.Connection = connection;
-                        connection.Open();
-                        using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
-                        {
-                            var data = new DataTable();
-                            data.Load(reader);
-                            Data = data;
-                        }
-                    }
-                }
-
-            }
-            catch (Exception ex)
-            {
-                ListDefinition = ex.ToString();
-            }
+            _model.ExecuteSqlCommand();
+            Data = _model.Data;
         }
 
         private void ExecuteGenerateCommand(object parameter)
         {
-            var builder = new StringBuilder();
-            var startIndex = SqlStatement.ToLower().IndexOf("from ", StringComparison.Ordinal) + 5;
-            var endIndex = SqlStatement.IndexOf(" ", startIndex + 1, StringComparison.Ordinal);
-            if (endIndex <= 0)
-                endIndex = SqlStatement.Length;
-
-            var type = SqlStatement.Substring(startIndex, (endIndex - startIndex));
-
-            builder.Append($"new List<{type}>{{");
-            foreach (DataRow row in Data.Rows)
-            {
-                builder.Append($"new {type} {{");
-                foreach (DataColumn column in Data.Columns)
-                {
-                    if (row[column.ColumnName] is DBNull)
-                        continue;
-
-                    builder.Append($"{column.ColumnName} = ");
-                    if (column.DataType == typeof(string) || column.DataType == typeof(Guid))
-                    {
-                        builder.Append($"\"{row[column.ColumnName]}\", ");
-                    }
-                    else if (column.DataType == typeof(Boolean))
-                    {
-                        builder.Append($" {row[column.ColumnName].ToString().ToLower()}, ");
-                    }
-                    else
-                    {
-                        builder.Append($" {row[column.ColumnName]}, ");
-                    }
-                }
-                builder.Remove(builder.Length - 2, 2);
-                builder.Append("},\n");
-            }
-            builder.Remove(builder.Length - 2, 2);
-            builder.Append("});");
-            ListDefinition = builder.ToString();
+            _model.GenerateList();
+            ListDefinition = _model.ListDefinition;
             Clipboard.SetText(ListDefinition);
         }
         public List<string> AvailableTypes { get; set; }
@@ -123,25 +63,18 @@ namespace MockHelper
 
         public string ListDefinition
         {
-            get => _listDefinition;
+            get => _model.ListDefinition;
             set
             {
-                _listDefinition = value;
+                _model.ListDefinition = value;
                 OnPropertyChanged();
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
 
         public ICommand SqlCommand { get; }
         public ICommand GenerateCommand { get; }
 
-        public string ConnectionString { get; set; }
     }
 }
