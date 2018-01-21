@@ -1,0 +1,95 @@
+﻿<Window x:Class="MockHelper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MockHelper"
+        d:DesignHeight="300"
+        d:DesignWidth="300"
+        mc:Ignorable="d"
+        Title="Mock List Generator" 
+        Icon="app.ico"
+        Height="600" Width="800">
+    <Window.DataContext>
+        <local:MainViewModel/>
+    </Window.DataContext>
+    
+    <Window.Resources>
+        <Style TargetType="{x:Type Grid}" x:Key="FiveMarginGrid">
+            <Setter Property="local:MarginSetter.Margin" Value="5" />
+        </Style>
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="Height" Value="20"></Setter>
+            <Setter Property="Padding" Value="3 0 3 0"></Setter>
+        </Style>
+        <Style TargetType="{x:Type ComboBox}">
+            <Setter Property="Height" Value="20"></Setter>
+            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+            <Setter Property="Padding" Value="3 0 3 0"></Setter>
+        </Style>
+        
+    </Window.Resources>
+    <Grid Style="{StaticResource FiveMarginGrid}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height=".25*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height=".25*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height=".5*" />
+        </Grid.RowDefinitions>
+        <DockPanel LastChildFill="True"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="2">
+        <Label>Connection</Label>            
+        <TextBox Text="{Binding ConnectionString}"
+                 VerticalContentAlignment="Center"
+                 ></TextBox>
+        </DockPanel>
+        <TextBox Grid.Row="1" 
+                   Grid.Column="0"
+                   Grid.ColumnSpan="2"
+                   Text="{Binding SqlStatement, UpdateSourceTrigger=PropertyChanged}"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto"
+                 ></TextBox>
+        <Button Grid.Row="2"
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                Command="{Binding SqlCommand}" 
+                >_Ausführen</Button>
+        <!--
+        <DockPanel LastChildFill="True"
+                   Grid.Row="2"
+                   Grid.Column="0">
+            <Label>Typ</Label>
+            <ComboBox SelectedValue="{Binding SelectedType}" ItemsSource="{Binding AvailableTypes}"></ComboBox>
+        </DockPanel>
+        //-->
+        <DataGrid 
+            Grid.Row="3"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            ItemsSource="{Binding Data}"           
+            AutoGenerateColumns="True"
+            ></DataGrid>
+        <TextBox Grid.Row="5" 
+                   Grid.Column="0"
+                   Grid.ColumnSpan="2"
+                   Text="{Binding ListDefinition}"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Auto"
+                 ></TextBox>
+        <Button Grid.Row="4"
+                Grid.Column="1"
+                HorizontalAlignment="Right"
+                Command="{Binding GenerateCommand}"                
+        >_Generieren</Button>
+        <!--IsEnabled="{Binding CanExecuteGenerateCommand}"-->
+    </Grid>
+</Window>
